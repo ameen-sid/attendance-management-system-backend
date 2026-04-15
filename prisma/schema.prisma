@@ -1,0 +1,167 @@
+generator client {
+	provider = "prisma-client-js"
+}
+
+datasource db {
+	provider = "mysql"
+	url      = env("DATABASE_URL")
+}
+
+// --- ENUMS ---
+enum Status {
+	PRESENT
+	ABSENT
+	HALF_DAY
+}
+
+// --- MODELS ---
+model User {
+	id							Int							@id @default(autoincrement())
+	fullname					String
+	username					String						@unique
+	email						String?						@unique
+	password					String
+	isAdmin						Boolean						@default(false)
+	role						String						@default("Employee")
+	avatar						String?
+	shift_hours					Float						@default(9.0)
+
+	// Auth tokens
+	access_token				String?						@db.Text
+	refresh_token				String?						@db.Text
+
+	// Relations
+	attendanceLogs				AttendanceLogs[]
+	events						Event[]
+
+	// Timestamps
+	createdAt					DateTime					@default(now())
+	updatedAt					DateTime					@updatedAt
+}
+
+model Client {
+	id							Int							@id @default(autoincrement())
+	name						String						@unique
+	description					String?						@db.Text
+	
+	// Relations
+	attendanceLogs				AttendanceLogs[]
+
+	createdAt					DateTime					@default(now())
+	updatedAt					DateTime					@updatedAt
+}
+
+model AttendanceLogs {
+	id							Int							@id @default(autoincrement())
+	date						DateTime					@db.Date
+
+	clock_in_time				DateTime
+	clock_in_latitude			Float
+	clock_in_longitude			Float
+	clock_in_address			String?
+
+	clock_out_time				DateTime?
+	clock_out_latitude			Float?
+	clock_out_longitude			Float?
+	clock_out_address			String?
+
+	status						Status						@default(PRESENT)
+
+	// PLAN Phase (Clock-in)
+	plannedClientId				Int?
+	plannedClient				Client?						@relation(fields: [plannedClientId], references: [id])
+	plannedDept					String?
+	plannedTasks				String?						@db.Text
+
+	// Clause Selection (Clock-in / PLAN)
+	plannedClauseCategoryId		Int?
+	plannedClauseCategory		ClauseCategory?				@relation("PlannedClauseCategory", fields: [plannedClauseCategoryId], references: [id])
+	plannedClauseId				Int?
+	plannedClause				Clause?						@relation("PlannedClause", fields: [plannedClauseId], references: [id])
+
+	// DO, CHECK, ACT, FOLLOW UP Phase (Clock-out)
+	reportTasksDone				String?						@db.Text
+	reportGuidance				String?						@db.Text
+	reportHandedOver			String?						@db.Text
+	reportTargetDate			String?
+	reportResponsible			String?
+	reportStatus				String?
+
+	// Clause Selection (Clock-out)
+	reportClauseCategoryId		Int?
+	reportClauseCategory		ClauseCategory?				@relation(fields: [reportClauseCategoryId], references: [id])
+	reportClauseId				Int?
+	reportClause				Clause?						@relation(fields: [reportClauseId], references: [id])
+
+	// Tasks Checklist (Multi-Task)
+	attendanceTasks				AttendanceTask[]
+
+	// Relations
+	userId						Int
+	user						User						@relation(fields: [userId], references: [id], onDelete: Cascade)
+
+	createdAt					DateTime					@default(now())
+	updatedAt					DateTime					@updatedAt
+}
+
+model ClauseCategory {
+	id							Int							@id @default(autoincrement())
+	name						String						@unique
+	order						Int							@default(0)
+	
+	clauses						Clause[]
+	attendanceLogs				AttendanceLogs[]
+	plannedAttendanceLogs		AttendanceLogs[]			@relation("PlannedClauseCategory")
+
+	createdAt					DateTime					@default(now())
+	updatedAt					DateTime					@updatedAt
+}
+
+model Clause {
+	id							Int							@id @default(autoincrement())
+	title						String
+	order						Int							@default(0)
+
+	// Relations
+	categoryId					Int
+	category					ClauseCategory				@relation(fields: [categoryId], references: [id], onDelete: Cascade)
+	attendanceLogs				AttendanceLogs[]
+	plannedAttendanceLogs		AttendanceLogs[]			@relation("PlannedClause")
+	attendanceTasks				AttendanceTask[]
+
+	createdAt					DateTime					@default(now())
+	updatedAt					DateTime					@updatedAt
+}
+
+model AttendanceTask {
+	id							Int							@id @default(autoincrement())
+	attendanceLogId				Int
+	attendanceLog				AttendanceLogs				@relation(fields: [attendanceLogId], references: [id], onDelete: Cascade)
+	
+	clauseId					Int
+	clause						Clause						@relation(fields: [clauseId], references: [id])
+	
+	isCompleted					Boolean						@default(false)
+	remarks						String?						@db.Text
+	
+	createdAt					DateTime					@default(now())
+	updatedAt					DateTime					@updatedAt
+}
+
+model Event {
+	id							Int							@id @default(autoincrement())
+	title						String
+	description					String?						@db.Text
+	start						DateTime
+	end							DateTime
+	allDay						Boolean						@default(false)
+	type						String						@default("Meeting") // Meeting, Client Visit, Internal Task, Other
+	color						String?						// Based on type
+
+	// Relations
+	userId						Int
+	user						User						@relation(fields: [userId], references: [id], onDelete: Cascade)
+
+	createdAt					DateTime					@default(now())
+	updatedAt					DateTime					@updatedAt
+}
