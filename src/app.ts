@@ -16,8 +16,13 @@ app.use(express.json());
 app.use(express.urlencoded());
 app.use(cookieParser());
 
+const allowedOrigins = [
+    process.env.FRONTEND_URL || "https://theconsultinggurus.in",
+    "http://localhost:5173"
+];
+
 const corsOptions = {
-    origin: [ENV.FRONTEND_URL, "http://localhost:5173", "http://localhost:5174"],
+    origin: allowedOrigins,
     credentials: true,
     optionsSuccessStatus: 200,
     maxAge: 86400,
