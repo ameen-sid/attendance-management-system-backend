@@ -25,7 +25,6 @@ export const authenticate = asyncHandler(async (req: AuthRequest, res: Response,
 		const user = await prisma.user.findUnique({
 			where: { id: decoded.id }
 		});
-
 		if (!user) {
 			throw new ApiError(401, "Invalid Access Token");
 		}

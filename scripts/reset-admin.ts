@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
+import ENV from '../src/configs/env';
 
 const prisma = new PrismaClient();
 
@@ -9,9 +10,7 @@ async function resetAdminUser() {
 
         // Step 1: Delete all existing admin users
         const deleteResult = await prisma.user.deleteMany({
-            where: {
-                isAdmin: true
-            }
+            where: { isAdmin: true }
         });
         console.log(`✅ Deleted ${deleteResult.count} existing admin user(s)\n`);
 
@@ -24,7 +23,7 @@ async function resetAdminUser() {
             data: {
                 fullname: 'Administrator',
                 username: 'admin',
-                email: 'admin@company.com',
+                email: ENV.ADMIN_EMAIL,
                 password: hashedPassword,
                 isAdmin: true,
                 role: 'Admin',

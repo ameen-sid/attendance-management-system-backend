@@ -43,7 +43,7 @@ model Client {
 	id							Int							@id @default(autoincrement())
 	name						String						@unique
 	description					String?						@db.Text
-	
+
 	// Relations
 	attendanceLogs				AttendanceLogs[]
 
@@ -108,7 +108,7 @@ model ClauseCategory {
 	id							Int							@id @default(autoincrement())
 	name						String						@unique
 	order						Int							@default(0)
-	
+
 	clauses						Clause[]
 	attendanceLogs				AttendanceLogs[]
 	plannedAttendanceLogs		AttendanceLogs[]			@relation("PlannedClauseCategory")
@@ -137,13 +137,13 @@ model AttendanceTask {
 	id							Int							@id @default(autoincrement())
 	attendanceLogId				Int
 	attendanceLog				AttendanceLogs				@relation(fields: [attendanceLogId], references: [id], onDelete: Cascade)
-	
+
 	clauseId					Int
 	clause						Clause						@relation(fields: [clauseId], references: [id])
-	
+
 	isCompleted					Boolean						@default(false)
 	remarks						String?						@db.Text
-	
+
 	createdAt					DateTime					@default(now())
 	updatedAt					DateTime					@updatedAt
 }

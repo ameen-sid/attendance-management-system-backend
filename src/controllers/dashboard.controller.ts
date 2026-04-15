@@ -54,6 +54,7 @@ export const getDashboardStats = asyncHandler(async (req: AuthRequest, res: Resp
 
 	const trend = [];
 	for (let i = 0; i < 7; i++) {
+
 		const d = new Date(sevenDaysAgo);
 		d.setDate(d.getDate() + i);
 		const dStr = format(d, 'dd MMM');
@@ -67,7 +68,7 @@ export const getDashboardStats = asyncHandler(async (req: AuthRequest, res: Resp
 
 		// Unique users for this day
 		const dayUserIds = new Set(dayLogs.map(l => l.userId));
-		
+
 		// Unique late users for this day
 		const dayLateUserIds = new Set(
 			dayLogs
@@ -137,8 +138,7 @@ export const getDashboardStats = asyncHandler(async (req: AuthRequest, res: Resp
 	});
 
 	return res.status(200).json(
-		new ApiResponse(
-			200,
+		new ApiResponse(200,
 			{
 				totalEmployees,
 				presentToday,

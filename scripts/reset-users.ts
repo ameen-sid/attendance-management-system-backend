@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -8,13 +8,10 @@ async function resetUsersPasswords() {
         console.log('🔄 Starting user password reset...\n');
 
         const usersToReset = ['adnan', 'jatin', 'hussain', 'mustafa', 'shahid'];
-
         for (const username of usersToReset) {
             // Check if user exists
             const user = await prisma.user.findFirst({
-                where: {
-                    username: username
-                }
+                where: { username: username }
             });
 
             if (!user) {
@@ -27,17 +24,11 @@ async function resetUsersPasswords() {
 
             // Update user password
             await prisma.user.update({
-                where: {
-                    id: user.id
-                },
-                data: {
-                    password: hashedPassword
-                }
+                where: { id: user.id },
+                data: { password: hashedPassword }
             });
-
             console.log(`✅ Password reset successfully for user: ${username}`);
         }
-
         console.log('\n🎉 Password reset process completed!\n');
 
     } catch (error) {

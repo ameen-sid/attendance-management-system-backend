@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../databases/prisma.js';
 import ENV from '../configs/env.js';
@@ -35,8 +35,7 @@ export const loginMobile = asyncHandler(async (req: Request, res: Response) => {
 	});
 
 	return res.status(200).json(
-		new ApiResponse(
-			200,
+		new ApiResponse(200,
 			{
 				token,
 				user: {
@@ -80,8 +79,7 @@ export const loginWeb = asyncHandler(async (req: Request, res: Response) => {
 	});
 
 	return res.status(200).json(
-		new ApiResponse(
-			200,
+		new ApiResponse(200,
 			{
 				token,
 				user: {

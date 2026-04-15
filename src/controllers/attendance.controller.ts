@@ -1,5 +1,14 @@
 import type { Response } from 'express';
-import { startOfDay, endOfDay, startOfMonth, endOfMonth, format, parse, isAfter, getDaysInMonth } from 'date-fns';
+import { 
+    startOfDay, 
+    endOfDay, 
+    startOfMonth, 
+    endOfMonth, 
+    format, 
+    parse, 
+    isAfter, 
+    getDaysInMonth 
+} from 'date-fns';
 import prisma from '../databases/prisma.js';
 import type { AuthRequest } from '../middlewares/auth.middleware.js';
 import asyncHandler from '../utils/asyncHandler.js';
@@ -11,7 +20,7 @@ export const getTodayStatus = asyncHandler(async (req: AuthRequest, res: Respons
 
     const { userId } = req.params;
     if (!userId) {
-        throw new ApiError(400, "User ID is required");
+        throw new ApiError(400, "User ID is required"); 
     }
 
     const today = new Date();
@@ -59,11 +68,15 @@ export const getTodayStatus = asyncHandler(async (req: AuthRequest, res: Respons
 export const clockIn = asyncHandler(async (req: AuthRequest, res: Response) => {
 
     const { 
-        userId, latitude, longitude, address, 
-        plannedClientId, plannedDept, plannedTasks,
+        userId, 
+        latitude, 
+        longitude, 
+        address, 
+        plannedClientId, 
+        plannedDept, 
+        plannedTasks,
         clauseIds
     } = req.body;
-    
     if (!userId || !latitude || !longitude) {
         throw new ApiError(400, "All fields (userId, latitude, longitude) are required");
     }
@@ -117,10 +130,12 @@ export const clockIn = asyncHandler(async (req: AuthRequest, res: Response) => {
 export const clockOut = asyncHandler(async (req: AuthRequest, res: Response) => {
 
     const { 
-        userId, latitude, longitude, address, 
+        userId, 
+        latitude, 
+        longitude, 
+        address, 
         taskResults // Expected: [{ taskId: number, isCompleted: boolean, remarks: string }]
     } = req.body;
-    
     if (!userId || !latitude || !longitude) {
         throw new ApiError(400, "All fields (userId, latitude, longitude) are required");
     }
@@ -146,9 +161,7 @@ export const clockOut = asyncHandler(async (req: AuthRequest, res: Response) => 
     }
 
     const updatedLog = await prisma.attendanceLogs.update({
-        where: { 
-            id: activeLog.id 
-        },
+        where: { id: activeLog.id },
         data: {
             clock_out_time: new Date(),
             clock_out_latitude: parseFloat(latitude),
@@ -179,7 +192,6 @@ export const clockOut = asyncHandler(async (req: AuthRequest, res: Response) => 
 export const getDailyAttendance = asyncHandler(async (req: AuthRequest, res: Response) => {
 
     const { date } = req.query; // Expects YYYY-MM-DD
-
     const targetDate = date ? new Date(date as string) : new Date();
     const start = startOfDay(targetDate);
     const end = endOfDay(targetDate);
@@ -334,14 +346,7 @@ export const getEmployeeMonthlyHistory = asyncHandler(async (req: AuthRequest, r
     }
 
     return res.status(200).json(
-        new ApiResponse(
-            200,
-            {
-                employee: user,
-                logs: resultLogs
-            },
-            "Monthly history fetched"
-        )
+        new ApiResponse(200, { employee: user, logs: resultLogs }, "Monthly history fetched")
     );
 });
 
@@ -363,7 +368,6 @@ export const getClientMonthlyHistory = asyncHandler(async (req: AuthRequest, res
     const client = await prisma.client.findUnique({
         where: { id: Number(id) }
     });
-
     if (!client) {
         throw new ApiError(404, "Client not found");
     }

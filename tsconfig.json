@@ -8,6 +8,9 @@
 		// See also https://aka.ms/tsconfig/module
 		"module": "nodenext",
 		"target": "esnext",
+		"moduleResolution": "nodenext",
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
 		"types": [
 			"node"
 		],

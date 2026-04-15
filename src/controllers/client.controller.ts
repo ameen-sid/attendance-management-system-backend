@@ -7,6 +7,7 @@ import ApiResponse from '../utils/ApiResponse.js';
 
 // Fetch All Clients
 export const getAllClients = asyncHandler(async (req: AuthRequest, res: Response) => {
+
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = (req.query.search as string) || '';
@@ -29,8 +30,7 @@ export const getAllClients = asyncHandler(async (req: AuthRequest, res: Response
     ]);
 
     return res.status(200).json(
-        new ApiResponse(
-            200,
+        new ApiResponse(200,
             {
                 clients,
                 total,
@@ -44,6 +44,7 @@ export const getAllClients = asyncHandler(async (req: AuthRequest, res: Response
 
 // Get Client By ID
 export const getClientById = asyncHandler(async (req: AuthRequest, res: Response) => {
+
     const { id } = req.params;
     // @ts-ignore
     const client = await prisma.client.findUnique({
@@ -61,8 +62,8 @@ export const getClientById = asyncHandler(async (req: AuthRequest, res: Response
 
 // Create New Client
 export const createClient = asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { name, description } = req.body;
 
+    const { name, description } = req.body;
     if (!name) {
         throw new ApiError(400, "Client name is required");
     }
@@ -91,6 +92,7 @@ export const createClient = asyncHandler(async (req: AuthRequest, res: Response)
 
 // Update Client
 export const updateClient = asyncHandler(async (req: AuthRequest, res: Response) => {
+
     const { id } = req.params;
     const { name, description } = req.body;
 
@@ -130,6 +132,7 @@ export const updateClient = asyncHandler(async (req: AuthRequest, res: Response)
 
 // Delete Client
 export const deleteClient = asyncHandler(async (req: AuthRequest, res: Response) => {
+
     const { id } = req.params;
 
     // @ts-ignore

@@ -1,5 +1,5 @@
 import type { Response } from 'express';
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
 import type { AuthRequest } from '../middlewares/auth.middleware.js';
 import prisma from '../databases/prisma.js';
 import asyncHandler from '../utils/asyncHandler.js';
@@ -42,8 +42,7 @@ export const getAllEmployees = asyncHandler(async (req: AuthRequest, res: Respon
     ]);
 
     return res.status(200).json(
-        new ApiResponse(
-            200,
+        new ApiResponse(200,
             {
                 employees,
                 total,
@@ -98,9 +97,7 @@ export const updateEmployee = asyncHandler(async (req: AuthRequest, res: Respons
     }
 
     const updatedUser = await prisma.user.update({
-        where: { 
-            id: Number(id) 
-        },
+        where: { id: Number(id) },
         data: {
             fullname: fullname || user.fullname,
             role: role || user.role,

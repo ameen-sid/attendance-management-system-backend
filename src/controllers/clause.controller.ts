@@ -4,8 +4,6 @@ import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 
-// --- CATEGORY CONTROLLERS ---
-
 export const getAllCategoriesWithClauses = asyncHandler(async (req: any, res: Response) => {
     try {
         const categories = await (prisma as any).clauseCategory.findMany({
@@ -27,8 +25,11 @@ export const getAllCategoriesWithClauses = asyncHandler(async (req: any, res: Re
 });
 
 export const createCategory = asyncHandler(async (req: any, res: Response) => {
+
     const { name, order } = req.body;
-    if (!name) throw new ApiError(400, "Category name is required");
+    if (!name) {
+        throw new ApiError(400, "Category name is required");
+    }
 
     const category = await (prisma as any).clauseCategory.create({
         data: { name, order: Number(order) || 0 }
@@ -38,6 +39,7 @@ export const createCategory = asyncHandler(async (req: any, res: Response) => {
 });
 
 export const updateCategory = asyncHandler(async (req: any, res: Response) => {
+
     const { id } = req.params;
     const { name, order } = req.body;
 
@@ -50,14 +52,18 @@ export const updateCategory = asyncHandler(async (req: any, res: Response) => {
 });
 
 export const deleteCategory = asyncHandler(async (req: any, res: Response) => {
+
     const { id } = req.params;
     await (prisma as any).clauseCategory.delete({ where: { id: Number(id) } });
     return res.status(200).json(new ApiResponse(200, {}, "Category deleted"));
 });
 
 export const createClause = asyncHandler(async (req: any, res: Response) => {
+
     const { title, order, categoryId } = req.body;
-    if (!title || !categoryId) throw new ApiError(400, "Title and Category ID are required");
+    if (!title || !categoryId) {
+        throw new ApiError(400, "Title and Category ID are required");
+    }
 
     const clause = await (prisma as any).clause.create({
         data: { 
@@ -71,6 +77,7 @@ export const createClause = asyncHandler(async (req: any, res: Response) => {
 });
 
 export const updateClause = asyncHandler(async (req: any, res: Response) => {
+
     const { id } = req.params;
     const { title, order, categoryId } = req.body;
 
@@ -87,6 +94,7 @@ export const updateClause = asyncHandler(async (req: any, res: Response) => {
 });
 
 export const deleteClause = asyncHandler(async (req: any, res: Response) => {
+
     const { id } = req.params;
     await (prisma as any).clause.delete({ where: { id: Number(id) } });
     return res.status(200).json(new ApiResponse(200, {}, "Clause deleted"));

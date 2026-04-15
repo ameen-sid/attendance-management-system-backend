@@ -9,7 +9,6 @@ import dashboardRoutes from './routes/dashboard.routes.js';
 import clientRoutes from './routes/client.routes.js';
 import clauseRoutes from './routes/clause.routes.js';
 import eventRoutes from './routes/event.routes.js';
-import ApiResponse from './utils/ApiResponse.js';
 
 const app = express();
 
