@@ -4,11 +4,11 @@ import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 
-export const getAllCategoriesWithClauses = asyncHandler(async (req: any, res: Response) => {
+export const getAllCategoriesWithTasks = asyncHandler(async (req: any, res: Response) => {
     try {
-        const categories = await (prisma as any).clauseCategory.findMany({
+        const categories = await (prisma as any).taskCategory.findMany({
             include: {
-                clauses: {
+                tasks: {
                     orderBy: { order: 'asc' }
                 }
             },
@@ -19,7 +19,7 @@ export const getAllCategoriesWithClauses = asyncHandler(async (req: any, res: Re
             new ApiResponse(200, categories, "Fetched successfully")
         );
     } catch (error: any) {
-        console.error("DEBUG: getAllCategoriesWithClauses failed", error);
+        console.error("DEBUG: getAllCategoriesWithTasks failed", error);
         throw new ApiError(500, error.message || "Internal Server Error");
     }
 });
@@ -31,7 +31,7 @@ export const createCategory = asyncHandler(async (req: any, res: Response) => {
         throw new ApiError(400, "Category name is required");
     }
 
-    const category = await (prisma as any).clauseCategory.create({
+    const category = await (prisma as any).taskCategory.create({
         data: { name, order: Number(order) || 0 }
     });
 
@@ -43,7 +43,7 @@ export const updateCategory = asyncHandler(async (req: any, res: Response) => {
     const { id } = req.params;
     const { name, order } = req.body;
 
-    const category = await (prisma as any).clauseCategory.update({
+    const category = await (prisma as any).taskCategory.update({
         where: { id: Number(id) },
         data: { name, order: order !== undefined ? Number(order) : undefined }
     });
@@ -54,18 +54,18 @@ export const updateCategory = asyncHandler(async (req: any, res: Response) => {
 export const deleteCategory = asyncHandler(async (req: any, res: Response) => {
 
     const { id } = req.params;
-    await (prisma as any).clauseCategory.delete({ where: { id: Number(id) } });
+    await (prisma as any).taskCategory.delete({ where: { id: Number(id) } });
     return res.status(200).json(new ApiResponse(200, {}, "Category deleted"));
 });
 
-export const createClause = asyncHandler(async (req: any, res: Response) => {
+export const createTask = asyncHandler(async (req: any, res: Response) => {
 
     const { title, order, categoryId } = req.body;
     if (!title || !categoryId) {
         throw new ApiError(400, "Title and Category ID are required");
     }
 
-    const clause = await (prisma as any).clause.create({
+    const task = await (prisma as any).task.create({
         data: { 
             title, 
             order: Number(order) || 0, 
@@ -73,15 +73,15 @@ export const createClause = asyncHandler(async (req: any, res: Response) => {
         }
     });
 
-    return res.status(201).json(new ApiResponse(201, clause, "Clause created"));
+    return res.status(201).json(new ApiResponse(201, task, "Task created"));
 });
 
-export const updateClause = asyncHandler(async (req: any, res: Response) => {
+export const updateTask = asyncHandler(async (req: any, res: Response) => {
 
     const { id } = req.params;
     const { title, order, categoryId } = req.body;
 
-    const clause = await (prisma as any).clause.update({
+    const task = await (prisma as any).task.update({
         where: { id: Number(id) },
         data: { 
             title, 
@@ -90,12 +90,12 @@ export const updateClause = asyncHandler(async (req: any, res: Response) => {
         }
     });
 
-    return res.status(200).json(new ApiResponse(200, clause, "Clause updated"));
+    return res.status(200).json(new ApiResponse(200, task, "Task updated"));
 });
 
-export const deleteClause = asyncHandler(async (req: any, res: Response) => {
+export const deleteTask = asyncHandler(async (req: any, res: Response) => {
 
     const { id } = req.params;
-    await (prisma as any).clause.delete({ where: { id: Number(id) } });
-    return res.status(200).json(new ApiResponse(200, {}, "Clause deleted"));
+    await (prisma as any).task.delete({ where: { id: Number(id) } });
+    return res.status(200).json(new ApiResponse(200, {}, "Task deleted"));
 });

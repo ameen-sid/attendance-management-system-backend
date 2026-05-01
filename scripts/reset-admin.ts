@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
-import ENV from '../src/configs/env';
+// import ENV from '../src/configs/env';
 
 const prisma = new PrismaClient();
 
@@ -23,7 +23,8 @@ async function resetAdminUser() {
             data: {
                 fullname: 'Administrator',
                 username: 'admin',
-                email: ENV.ADMIN_EMAIL,
+                // email: ENV.ADMIN_EMAIL,
+                email: 'info@sarvagyainstitute.com',
                 password: hashedPassword,
                 isAdmin: true,
                 role: 'Admin',

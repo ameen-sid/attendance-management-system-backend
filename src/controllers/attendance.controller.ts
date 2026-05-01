@@ -38,7 +38,7 @@ export const getTodayStatus = asyncHandler(async (req: AuthRequest, res: Respons
         include: {
             attendanceTasks: {
                 include: {
-                    clause: {
+                    task: {
                         select: { title: true }
                     }
                 }
@@ -75,7 +75,7 @@ export const clockIn = asyncHandler(async (req: AuthRequest, res: Response) => {
         plannedClientId, 
         plannedDept, 
         plannedTasks,
-        clauseIds
+        taskIds
     } = req.body;
     if (!userId || !latitude || !longitude) {
         throw new ApiError(400, "All fields (userId, latitude, longitude) are required");
@@ -114,8 +114,8 @@ export const clockIn = asyncHandler(async (req: AuthRequest, res: Response) => {
             plannedDept: plannedDept || null,
             plannedTasks: plannedTasks || null,
             attendanceTasks: {
-                create: (clauseIds || []).map((id: number) => ({
-                    clauseId: Number(id)
+                create: (taskIds || []).map((id: number) => ({
+                    taskId: Number(id)
                 }))
             }
         }
@@ -209,7 +209,7 @@ export const getDailyAttendance = asyncHandler(async (req: AuthRequest, res: Res
             },
             attendanceTasks: {
                 include: {
-                    clause: { select: { title: true } }
+                    task: { select: { title: true } }
                 }
             }
         },
@@ -239,7 +239,7 @@ export const getDailyAttendance = asyncHandler(async (req: AuthRequest, res: Res
             reportTasksDone: log.reportTasksDone || "--",
             attendanceTasks: log.attendanceTasks.map(t => ({
                 id: t.id,
-                title: t.clause.title,
+                title: t.task.title,
                 isCompleted: t.isCompleted,
                 remarks: t.remarks
             }))

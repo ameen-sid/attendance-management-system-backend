@@ -7,7 +7,7 @@ import employeeRoutes from './routes/employee.routes.js';
 import attendanceRoutes from './routes/attendance.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import clientRoutes from './routes/client.routes.js';
-import clauseRoutes from './routes/clause.routes.js';
+import taskRoutes from './routes/task.routes.js';
 import eventRoutes from './routes/event.routes.js';
 
 const app = express();
@@ -17,7 +17,7 @@ app.use(express.urlencoded());
 app.use(cookieParser());
 
 const allowedOrigins = [
-    process.env.FRONTEND_URL || "https://theconsultinggurus.in",
+    process.env.FRONTEND_URL || "https://ams.sarvagyainnovation.com",
     "http://localhost:5173"
 ];
 
@@ -34,7 +34,7 @@ app.use('/api/employee', employeeRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/client', clientRoutes);
-app.use('/api/clause', clauseRoutes);
+app.use('/api/task', taskRoutes);
 app.use('/api/event', eventRoutes);
 
 // Global Error Handler Middleware (must be after all routes)
