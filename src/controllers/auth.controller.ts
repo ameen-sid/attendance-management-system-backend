@@ -23,6 +23,11 @@ export const loginMobile = asyncHandler(async (req: Request, res: Response) => {
 		throw new ApiError(401, "Invalid credentials");
 	}
 
+	if (user.isAdmin) {
+		console.log(`[AUTH] Admin login attempt blocked on mobile: ${username}`);
+		throw new ApiError(403, "Access Denied: Admin accounts are restricted to the Web Dashboard only.");
+	}
+
 	const token = jwt.sign(
 		{ id: user.id, isAdmin: false },
 		JWT_SECRET,
@@ -42,6 +47,7 @@ export const loginMobile = asyncHandler(async (req: Request, res: Response) => {
 					id: user.id,
 					fullname: user.fullname,
 					isAdmin: user.isAdmin,
+					role: user.role,
 					avatar: user.avatar
 				}
 			},
@@ -63,8 +69,9 @@ export const loginWeb = asyncHandler(async (req: Request, res: Response) => {
 		throw new ApiError(401, "Invalid credentials");
 	}
 
-	if (user.isAdmin !== true) {
-		throw new ApiError(403, "Access Denied. Admins only.");
+	if (!user.isAdmin) {
+		console.log(`[AUTH] Employee login attempt blocked on web: ${username}`);
+		throw new ApiError(403, "Access Denied: Employee accounts are restricted to the Mobile App only.");
 	}
 
 	const token = jwt.sign(
@@ -87,7 +94,8 @@ export const loginWeb = asyncHandler(async (req: Request, res: Response) => {
 					fullname: user.fullname,
 					username: user.username,
 					email: user.email,
-					isAdmin: user.isAdmin
+					isAdmin: user.isAdmin,
+					role: user.role
 				}
 			},
 			"Dashboard Login Successful"
