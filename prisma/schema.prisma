@@ -46,7 +46,8 @@ model Client {
     description String? @db.Text
 
     // Relations
-    attendanceLogs AttendanceLogs[]
+    attendanceLogs  AttendanceLogs[]
+    attendanceTasks AttendanceTask[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -141,6 +142,10 @@ model AttendanceTask {
 
     taskId Int
     task   Task @relation(fields: [taskId], references: [id])
+
+    clientId   Int?
+    client     Client? @relation(fields: [clientId], references: [id])
+    department String?
 
     isCompleted Boolean @default(false)
     remarks     String? @db.Text

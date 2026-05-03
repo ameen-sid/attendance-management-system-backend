@@ -40,6 +40,9 @@ export const getTodayStatus = asyncHandler(async (req: AuthRequest, res: Respons
                 include: {
                     task: {
                         select: { title: true }
+                    },
+                    client: {
+                        select: { name: true }
                     }
                 }
             }
@@ -75,8 +78,16 @@ export const clockIn = asyncHandler(async (req: AuthRequest, res: Response) => {
         plannedClientId, 
         plannedDept, 
         plannedTasks,
-        taskIds
+        taskIds,
+        tasks,
+        client_id,
+        department
     } = req.body;
+
+    const finalTaskIds = taskIds || tasks || [];
+    const finalClientId = plannedClientId || client_id;
+    const finalDept = plannedDept || department;
+
     if (!userId || !latitude || !longitude) {
         throw new ApiError(400, "All fields (userId, latitude, longitude) are required");
     }
@@ -110,13 +121,28 @@ export const clockIn = asyncHandler(async (req: AuthRequest, res: Response) => {
             clock_in_longitude: parseFloat(longitude),
             clock_in_address: address || "Unknown Location",
             status: 'PRESENT',
-            plannedClientId: plannedClientId ? Number(plannedClientId) : null,
-            plannedDept: plannedDept || null,
-            plannedTasks: plannedTasks || null,
+            plannedClientId: finalClientId ? Number(finalClientId) : null,
+            plannedDept: finalDept || null,
             attendanceTasks: {
-                create: (taskIds || []).map((id: number) => ({
-                    taskId: Number(id)
-                }))
+                create: (tasks && Array.isArray(tasks) && typeof tasks[0] === 'object')
+                    ? tasks.map((t: any) => ({
+                        taskId: Number(t.taskId),
+                        clientId: t.clientId ? Number(t.clientId) : (finalClientId ? Number(finalClientId) : null),
+                        department: t.department || finalDept || null
+                    }))
+                    : (finalTaskIds || []).map((id: any) => ({
+                        taskId: Number(id),
+                        clientId: finalClientId ? Number(finalClientId) : null,
+                        department: finalDept || null
+                    }))
+            }
+        },
+        include: {
+            attendanceTasks: {
+                include: {
+                    task: { select: { title: true } },
+                    client: { select: { name: true } }
+                }
             }
         }
     });
@@ -209,7 +235,8 @@ export const getDailyAttendance = asyncHandler(async (req: AuthRequest, res: Res
             },
             attendanceTasks: {
                 include: {
-                    task: { select: { title: true } }
+                    task: { select: { title: true } },
+                    client: { select: { name: true } }
                 }
             }
         },
@@ -240,6 +267,7 @@ export const getDailyAttendance = asyncHandler(async (req: AuthRequest, res: Res
             attendanceTasks: log.attendanceTasks.map(t => ({
                 id: t.id,
                 title: t.task.title,
+                client: t.client?.name || "--",
                 isCompleted: t.isCompleted,
                 remarks: t.remarks
             }))
@@ -281,7 +309,10 @@ export const getEmployeeMonthlyHistory = asyncHandler(async (req: AuthRequest, r
             }
         },
         include: {
-            plannedClient: true
+            plannedClient: true,
+            attendanceTasks: {
+                include: { client: true }
+            }
         },
         orderBy: { clock_in_time: 'desc' }
     });
@@ -316,6 +347,9 @@ export const getEmployeeMonthlyHistory = asyncHandler(async (req: AuthRequest, r
                 totalHrs = (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60);
             }
 
+            const clients = Array.from(new Set(log.attendanceTasks.map((at: any) => at.client?.name).filter(Boolean)));
+            const displayClient = clients.length > 0 ? clients.join(", ") : (log.plannedClient?.name || "--");
+
             resultLogs.push({
                 date: dateStr,
                 clockIn: format(checkIn, 'hh:mm a'),
@@ -325,7 +359,8 @@ export const getEmployeeMonthlyHistory = asyncHandler(async (req: AuthRequest, r
                 status: checkOut ? "Present" : "Working",
                 isLate: isAfter(checkIn, parse('10:10 AM', 'hh:mm a', checkIn)),
                 location: log.clock_in_address || 'Office',
-                plannedClient: log.plannedClient?.name || "--",
+                plannedClient: displayClient,
+                clients: clients,
                 plannedDept: log.plannedDept || "--"
             });
         } else {
@@ -362,9 +397,7 @@ export const getClientMonthlyHistory = asyncHandler(async (req: AuthRequest, res
         const end = endOfMonth(targetDate);
         dateFilter = { gte: start, lte: end };
     }
-    // Log the filter for debugging if needed
-    console.log(`Fetching history for Client ID ${id} with date filter:`, dateFilter);
-
+    
     const client = await prisma.client.findUnique({
         where: { id: Number(id) }
     });
@@ -374,12 +407,27 @@ export const getClientMonthlyHistory = asyncHandler(async (req: AuthRequest, res
 
     const logs = await prisma.attendanceLogs.findMany({
         where: {
-            plannedClientId: Number(id),
+            OR: [
+                { plannedClientId: Number(id) },
+                {
+                    attendanceTasks: {
+                        some: {
+                            clientId: Number(id)
+                        }
+                    }
+                }
+            ],
             clock_in_time: dateFilter
         },
         include: {
             user: {
                 select: { fullname: true, role: true }
+            },
+            attendanceTasks: {
+                where: { clientId: Number(id) },
+                include: {
+                    task: { select: { title: true } }
+                }
             }
         },
         orderBy: { clock_in_time: 'desc' }
@@ -394,6 +442,9 @@ export const getClientMonthlyHistory = asyncHandler(async (req: AuthRequest, res
             totalHrs = (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60);
         }
 
+        // Aggregate task titles for this client
+        const taskTitles = log.attendanceTasks.map(at => at.task.title).join(", ");
+
         return {
             id: log.id,
             date: format(checkIn, 'yyyy-MM-dd'),
@@ -403,13 +454,17 @@ export const getClientMonthlyHistory = asyncHandler(async (req: AuthRequest, res
             clockOut: checkOut ? format(checkOut, 'hh:mm a') : '--',
             totalHrs: totalHrs.toFixed(2),
             status: log.status,
-            plannedTasks: log.plannedTasks || '--',
+            taskCount: log.attendanceTasks.length,
+            plannedTasks: taskTitles || log.plannedTasks || '--',
             reportTasksDone: log.reportTasksDone || '--',
             location: log.clock_in_address || 'Remote'
         };
     });
 
+    // Calculate total tasks performed for this client
+    const totalTasks = logs.reduce((sum, log) => sum + log.attendanceTasks.length, 0);
+
     return res.status(200).json(
-        new ApiResponse(200, { client, logs: formattedLogs }, "Client history fetched")
+        new ApiResponse(200, { client, logs: formattedLogs, totalTasks }, "Client history fetched")
     );
 });

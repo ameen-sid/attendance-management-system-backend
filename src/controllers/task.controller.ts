@@ -19,7 +19,6 @@ export const getAllCategoriesWithTasks = asyncHandler(async (req: any, res: Resp
             new ApiResponse(200, categories, "Fetched successfully")
         );
     } catch (error: any) {
-        console.error("DEBUG: getAllCategoriesWithTasks failed", error);
         throw new ApiError(500, error.message || "Internal Server Error");
     }
 });

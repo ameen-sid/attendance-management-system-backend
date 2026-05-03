@@ -102,26 +102,29 @@ export const getDashboardStats = asyncHandler(async (req: AuthRequest, res: Resp
 		});
 	}
 
-	// 3. Client Workload today
-	const clientAttendance = await prisma.attendanceLogs.findMany({
+	// 3. Client Workload today (Task-based)
+	const tasksTodayList = await prisma.attendanceTask.findMany({
 		where: {
-			clock_in_time: { gte: start, lte: end }
+			attendanceLog: {
+				clock_in_time: { gte: start, lte: end }
+			}
 		},
 		include: {
-			plannedClient: { select: { name: true } }
+			client: { select: { name: true } }
 		}
 	});
 
-	const clientMap: Record<string, number> = {};
-	clientAttendance.forEach(log => {
-		const clientName = log.plannedClient?.name || 'Office / Internal';
-		clientMap[clientName] = (clientMap[clientName] || 0) + 1;
+	const clientTaskMap: Record<string, number> = {};
+
+	tasksTodayList.forEach(task => {
+		const clientName = task.client?.name || 'Office / Internal';
+		clientTaskMap[clientName] = (clientTaskMap[clientName] || 0) + 1;
 	});
 
-	const clientStats = Object.keys(clientMap).map(name => ({
+	const clientStats = Object.keys(clientTaskMap).map(name => ({
 		name,
-		value: clientMap[name] || 0
-	})).sort((a, b) => (b.value || 0) - (a.value || 0));
+		value: clientTaskMap[name]
+	})).sort((a, b) => b.value - a.value);
 
 	// 4. Task Stats
 	const tasksToday = await prisma.attendanceTask.count({
