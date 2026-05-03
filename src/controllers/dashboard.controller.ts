@@ -32,7 +32,9 @@ export const getDashboardStats = asyncHandler(async (req: AuthRequest, res: Resp
 		attendanceToday
 			.filter(log => {
 				const checkIn = new Date(log.clock_in_time);
-				return (checkIn.getHours() > 9) || (checkIn.getHours() === 9 && checkIn.getMinutes() > 35);
+				const threshold = new Date(checkIn);
+				threshold.setHours(10, 10, 0, 0);
+				return checkIn > threshold;
 			})
 			.map(log => log.userId)
 	);
@@ -74,7 +76,9 @@ export const getDashboardStats = asyncHandler(async (req: AuthRequest, res: Resp
 			dayLogs
 				.filter(l => {
 					const ct = new Date(l.clock_in_time);
-					return (ct.getHours() > 9) || (ct.getHours() === 9 && ct.getMinutes() > 35);
+					const threshold = new Date(ct);
+					threshold.setHours(10, 10, 0, 0);
+					return ct > threshold;
 				})
 				.map(l => l.userId)
 		);

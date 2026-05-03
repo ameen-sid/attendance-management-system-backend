@@ -217,9 +217,9 @@ export const getDailyAttendance = asyncHandler(async (req: AuthRequest, res: Res
     });
 
     const formattedLogs = logs.map(log => {
-        // Late Logic: Check if clock_in is after 09:05 AM (giving 5 min grace)
+        // Late Logic: Check if clock_in is after 10:10 AM
         const checkInTime = new Date(log.clock_in_time);
-        const lateThreshold = parse('09:35 AM', 'hh:mm a', checkInTime);
+        const lateThreshold = parse('10:10 AM', 'hh:mm a', checkInTime);
         const isLate = isAfter(checkInTime, lateThreshold);
 
         return {
@@ -323,7 +323,7 @@ export const getEmployeeMonthlyHistory = asyncHandler(async (req: AuthRequest, r
                 totalHrs: totalHrs.toFixed(2),
                 requiredHrs: user.shift_hours || 9,
                 status: checkOut ? "Present" : "Working",
-                isLate: isAfter(checkIn, parse('09:35 AM', 'hh:mm a', checkIn)),
+                isLate: isAfter(checkIn, parse('10:10 AM', 'hh:mm a', checkIn)),
                 location: log.clock_in_address || 'Office',
                 plannedClient: log.plannedClient?.name || "--",
                 plannedDept: log.plannedDept || "--"
