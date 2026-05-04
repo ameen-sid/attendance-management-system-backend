@@ -4,6 +4,7 @@ import prisma from '../databases/prisma.js';
 import type { AuthRequest } from '../middlewares/auth.middleware.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiResponse from '../utils/ApiResponse.js';
+import { isTimeAfter } from '../utils/timeUtils.js';
 
 export const getDashboardStats = asyncHandler(async (req: AuthRequest, res: Response) => {
 
@@ -30,12 +31,7 @@ export const getDashboardStats = asyncHandler(async (req: AuthRequest, res: Resp
 	// Count employees who were late today (at least one late arrival)
 	const lateUserIds = new Set(
 		attendanceToday
-			.filter(log => {
-				const checkIn = new Date(log.clock_in_time);
-				const threshold = new Date(checkIn);
-				threshold.setHours(10, 10, 0, 0);
-				return checkIn > threshold;
-			})
+			.filter(log => isTimeAfter(new Date(log.clock_in_time), "10:10"))
 			.map(log => log.userId)
 	);
 	const lateArrivals = lateUserIds.size;
@@ -74,12 +70,7 @@ export const getDashboardStats = asyncHandler(async (req: AuthRequest, res: Resp
 		// Unique late users for this day
 		const dayLateUserIds = new Set(
 			dayLogs
-				.filter(l => {
-					const ct = new Date(l.clock_in_time);
-					const threshold = new Date(ct);
-					threshold.setHours(10, 10, 0, 0);
-					return ct > threshold;
-				})
+				.filter(l => isTimeAfter(new Date(l.clock_in_time), "10:10"))
 				.map(l => l.userId)
 		);
 

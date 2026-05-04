@@ -14,6 +14,7 @@ import type { AuthRequest } from '../middlewares/auth.middleware.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
+import { isTimeAfter } from '../utils/timeUtils.js';
 
 // Get Today's Status
 export const getTodayStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -246,8 +247,7 @@ export const getDailyAttendance = asyncHandler(async (req: AuthRequest, res: Res
     const formattedLogs = logs.map(log => {
         // Late Logic: Check if clock_in is after 10:10 AM
         const checkInTime = new Date(log.clock_in_time);
-        const lateThreshold = parse('10:10 AM', 'hh:mm a', checkInTime);
-        const isLate = isAfter(checkInTime, lateThreshold);
+        const isLate = isTimeAfter(checkInTime, "10:10");
 
         return {
             id: log.id,
@@ -357,7 +357,7 @@ export const getEmployeeMonthlyHistory = asyncHandler(async (req: AuthRequest, r
                 totalHrs: totalHrs.toFixed(2),
                 requiredHrs: user.shift_hours || 9,
                 status: checkOut ? "Present" : "Working",
-                isLate: isAfter(checkIn, parse('10:10 AM', 'hh:mm a', checkIn)),
+                isLate: isTimeAfter(checkIn, "10:10"),
                 location: log.clock_in_address || 'Office',
                 plannedClient: displayClient,
                 clients: clients,
