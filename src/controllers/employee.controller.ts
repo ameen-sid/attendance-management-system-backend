@@ -33,6 +33,7 @@ export const getAllEmployees = asyncHandler(async (req: AuthRequest, res: Respon
                 fullname: true,
                 role: true,
                 username: true,
+                email: true,
                 shift_hours: true,
                 avatar: true,
                 createdAt: true
@@ -57,7 +58,7 @@ export const getAllEmployees = asyncHandler(async (req: AuthRequest, res: Respon
 // Create New Employee
 export const createEmployee = asyncHandler(async (req: AuthRequest, res: Response) => {
 
-    const { fullname, role, username, password, shift_hours } = req.body;
+    const { fullname, role, username, password, shift_hours, email } = req.body;
     if (!fullname || !username || !password) {
         throw new ApiError(400, "Fullname, username, and password are required");
     }
@@ -67,6 +68,13 @@ export const createEmployee = asyncHandler(async (req: AuthRequest, res: Respons
         throw new ApiError(409, "Username already exists");
     }
 
+    if (email) {
+        const existingEmail = await prisma.user.findUnique({ where: { email } });
+        if (existingEmail) {
+            throw new ApiError(409, "Email already exists");
+        }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await prisma.user.create({
@@ -74,6 +82,7 @@ export const createEmployee = asyncHandler(async (req: AuthRequest, res: Respons
             fullname,
             role,
             username,
+            email: email || null,
             password: hashedPassword,
             shift_hours: Number(shift_hours) || 9,
             isAdmin: false
@@ -89,7 +98,7 @@ export const createEmployee = asyncHandler(async (req: AuthRequest, res: Respons
 export const updateEmployee = asyncHandler(async (req: AuthRequest, res: Response) => {
 
     const { id } = req.params;
-    const { fullname, role, shift_hours, username } = req.body;
+    const { fullname, role, shift_hours, username, email } = req.body;
 
     const user = await prisma.user.findUnique({ where: { id: Number(id) } });
     if (!user) {
@@ -102,6 +111,7 @@ export const updateEmployee = asyncHandler(async (req: AuthRequest, res: Respons
             fullname: fullname || user.fullname,
             role: role || user.role,
             username: username || user.username,
+            email: email || user.email,
             shift_hours: shift_hours ? Number(shift_hours) : user.shift_hours
         }
     });
