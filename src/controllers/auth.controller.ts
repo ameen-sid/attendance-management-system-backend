@@ -48,7 +48,8 @@ export const loginMobile = asyncHandler(async (req: Request, res: Response) => {
 					fullname: user.fullname,
 					isAdmin: user.isAdmin,
 					role: user.role,
-					avatar: user.avatar
+					avatar: user.avatar,
+					shift_hours: (user.shift_hours ? Number(user.shift_hours) : 10)
 				}
 			},
 			"Mobile Login Successful"
@@ -95,7 +96,8 @@ export const loginWeb = asyncHandler(async (req: Request, res: Response) => {
 					username: user.username,
 					email: user.email,
 					isAdmin: user.isAdmin,
-					role: user.role
+					role: user.role,
+					shift_hours: user.shift_hours
 				}
 			},
 			"Dashboard Login Successful"
@@ -134,6 +136,25 @@ export const updatePassword = asyncHandler(async (req: AuthRequest, res: Respons
 	return res.status(200).json(
 		new ApiResponse(200, {}, "Password updated successfully")
 	);
+});
+
+// Save Push Token
+export const savePushToken = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { pushToken } = req.body;
+    const userId = req.user?.id;
+
+    if (!pushToken) {
+        throw new ApiError(400, "Push token is required");
+    }
+
+    await prisma.user.update({
+        where: { id: userId },
+        data: { pushToken }
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, null, "Push token saved successfully")
+    );
 });
 
 // Logout

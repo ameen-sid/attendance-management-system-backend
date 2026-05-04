@@ -25,6 +25,7 @@ model User {
     isAdmin     Boolean @default(false)
     role        String  @default("Employee")
     avatar      String?
+    pushToken   String? @db.Text
     shift_hours Float   @default(9.0)
 
     // Auth tokens
@@ -35,6 +36,7 @@ model User {
     attendanceLogs AttendanceLogs[]
     events         Event[]
     participatedEvents Event[] @relation("EventParticipants")
+    notifications  Notification[]
 
     // Timestamps
     createdAt DateTime @default(now())
@@ -175,6 +177,26 @@ model Event {
     
     participants User[] @relation("EventParticipants")
     managers     String? @db.Text
+
+    notifications Notification[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Notification {
+    id           Int      @id @default(autoincrement())
+    userId       Int
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    title        String
+    message      String   @db.Text
+    type         String   @default("INFO") // INFO, MEETING_REMINDER
+    isRead       Boolean  @default(false)
+    isSent       Boolean  @default(false)
+    scheduledFor DateTime @default(now())
+    
+    eventId      Int?
+    event        Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

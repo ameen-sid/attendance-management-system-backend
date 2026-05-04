@@ -1,13 +1,13 @@
 import type { Response } from 'express';
-import { 
-    startOfDay, 
-    endOfDay, 
-    startOfMonth, 
-    endOfMonth, 
-    format, 
-    parse, 
-    isAfter, 
-    getDaysInMonth 
+import {
+    startOfDay,
+    endOfDay,
+    startOfMonth,
+    endOfMonth,
+    format,
+    parse,
+    isAfter,
+    getDaysInMonth
 } from 'date-fns';
 import prisma from '../databases/prisma.js';
 import type { AuthRequest } from '../middlewares/auth.middleware.js';
@@ -21,7 +21,7 @@ export const getTodayStatus = asyncHandler(async (req: AuthRequest, res: Respons
 
     const { userId } = req.params;
     if (!userId) {
-        throw new ApiError(400, "User ID is required"); 
+        throw new ApiError(400, "User ID is required");
     }
 
     const today = new Date();
@@ -37,6 +37,9 @@ export const getTodayStatus = asyncHandler(async (req: AuthRequest, res: Respons
             }
         },
         include: {
+            user: {
+                select: { shift_hours: true }
+            },
             attendanceTasks: {
                 include: {
                     task: {
@@ -51,33 +54,41 @@ export const getTodayStatus = asyncHandler(async (req: AuthRequest, res: Respons
         orderBy: { createdAt: 'desc' }
     });
 
+    // If no log, we still need shift_hours from user profile
+    const user = await prisma.user.findUnique({
+        where: { id: Number(userId) },
+        select: { shift_hours: true }
+    });
+
+    const finalShiftHours = Number(log?.user?.shift_hours || user?.shift_hours);
+
     if (!log) {
         return res.status(200).json(
-            new ApiResponse(200, { status: 'NOT_STARTED', log: null }, "Status fetched successfully")
+            new ApiResponse(200, { status: 'NOT_STARTED', log: null, shift_hours: finalShiftHours }, "Status fetched successfully")
         );
     }
 
     if (log.clock_out_time) {
         return res.status(200).json(
-            new ApiResponse(200, { status: 'COMPLETED', log }, "Status fetched successfully")
+            new ApiResponse(200, { status: 'COMPLETED', log, shift_hours: finalShiftHours }, "Status fetched successfully")
         );
     }
 
     return res.status(200).json(
-        new ApiResponse(200, { status: 'ONGOING', log }, "Status fetched successfully")
+        new ApiResponse(200, { status: 'ONGOING', log, shift_hours: finalShiftHours }, "Status fetched successfully")
     );
 });
 
 // Clock In
 export const clockIn = asyncHandler(async (req: AuthRequest, res: Response) => {
 
-    const { 
-        userId, 
-        latitude, 
-        longitude, 
-        address, 
-        plannedClientId, 
-        plannedDept, 
+    const {
+        userId,
+        latitude,
+        longitude,
+        address,
+        plannedClientId,
+        plannedDept,
         plannedTasks,
         taskIds,
         tasks,
@@ -101,9 +112,9 @@ export const clockIn = asyncHandler(async (req: AuthRequest, res: Response) => {
     const existingLog = await prisma.attendanceLogs.findFirst({
         where: {
             userId: Number(userId),
-            date: { 
-                gte: startOfDay, 
-                lte: endOfDay 
+            date: {
+                gte: startOfDay,
+                lte: endOfDay
             },
             clock_out_time: null
         }
@@ -156,11 +167,11 @@ export const clockIn = asyncHandler(async (req: AuthRequest, res: Response) => {
 // Clock Out
 export const clockOut = asyncHandler(async (req: AuthRequest, res: Response) => {
 
-    const { 
-        userId, 
-        latitude, 
-        longitude, 
-        address, 
+    const {
+        userId,
+        latitude,
+        longitude,
+        address,
         taskResults // Expected: [{ taskId: number, isCompleted: boolean, remarks: string }]
     } = req.body;
     if (!userId || !latitude || !longitude) {
@@ -175,9 +186,9 @@ export const clockOut = asyncHandler(async (req: AuthRequest, res: Response) => 
     const activeLog = await prisma.attendanceLogs.findFirst({
         where: {
             userId: Number(userId),
-            date: { 
-                gte: startOfDay, 
-                lte: endOfDay 
+            date: {
+                gte: startOfDay,
+                lte: endOfDay
             },
             clock_out_time: null
         }
@@ -397,7 +408,7 @@ export const getClientMonthlyHistory = asyncHandler(async (req: AuthRequest, res
         const end = endOfMonth(targetDate);
         dateFilter = { gte: start, lte: end };
     }
-    
+
     const client = await prisma.client.findUnique({
         where: { id: Number(id) }
     });

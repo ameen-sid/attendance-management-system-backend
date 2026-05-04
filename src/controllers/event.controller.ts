@@ -1,5 +1,6 @@
 import type { Response } from 'express';
 import prisma from '../databases/prisma.js';
+import { createMeetingReminders, clearMeetingReminders } from '../services/notification.service.js';
 import type { AuthRequest } from '../middlewares/auth.middleware.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
@@ -69,6 +70,9 @@ export const createEvent = asyncHandler(async (req: AuthRequest, res: Response) 
         }
     });
 
+    // Create reminders
+    await createMeetingReminders(event.id);
+
     return res.status(201).json(
         new ApiResponse(201, event, "Event created successfully")
     );
@@ -110,6 +114,10 @@ export const updateEvent = asyncHandler(async (req: AuthRequest, res: Response) 
         }
     });
 
+    // Update reminders (clear old future ones and create new ones)
+    await clearMeetingReminders(updatedEvent.id);
+    await createMeetingReminders(updatedEvent.id);
+
     return res.status(200).json(
         new ApiResponse(200, updatedEvent, "Event updated successfully")
     );
@@ -126,6 +134,9 @@ export const deleteEvent = asyncHandler(async (req: AuthRequest, res: Response) 
     if (!existingEvent) {
         throw new ApiError(404, "Event not found");
     }
+
+    // Clear reminders
+    await clearMeetingReminders(Number(id));
 
     await prisma.event.delete({
         where: { id: Number(id) }
