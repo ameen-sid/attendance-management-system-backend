@@ -34,6 +34,7 @@ model User {
     // Relations
     attendanceLogs AttendanceLogs[]
     events         Event[]
+    participatedEvents Event[] @relation("EventParticipants")
 
     // Timestamps
     createdAt DateTime @default(now())
@@ -48,6 +49,7 @@ model Client {
     // Relations
     attendanceLogs  AttendanceLogs[]
     attendanceTasks AttendanceTask[]
+    events          Event[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -167,6 +169,12 @@ model Event {
     // Relations
     userId Int
     user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    clientId Int?
+    client   Client? @relation(fields: [clientId], references: [id])
+    
+    participants User[] @relation("EventParticipants")
+    managers     String? @db.Text
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

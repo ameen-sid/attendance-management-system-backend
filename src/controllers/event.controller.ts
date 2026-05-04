@@ -15,6 +15,19 @@ export const getEvents = asyncHandler(async (req: AuthRequest, res: Response) =>
                     id: true,
                     fullname: true
                 }
+            },
+            client: {
+                select: {
+                    id: true,
+                    name: true
+                }
+            },
+            participants: {
+                select: {
+                    id: true,
+                    fullname: true,
+                    avatar: true
+                }
             }
         },
         orderBy: { start: 'asc' }
@@ -28,7 +41,7 @@ export const getEvents = asyncHandler(async (req: AuthRequest, res: Response) =>
 // Create event
 export const createEvent = asyncHandler(async (req: AuthRequest, res: Response) => {
 
-    const { title, description, start, end, allDay, type, color, userId } = req.body;
+    const { title, description, start, end, allDay, type, color, userId, clientId, participantIds, managers } = req.body;
     if (!title || !start || !end || !userId) {
         throw new ApiError(400, "Title, start date, end date, and userId are required");
     }
@@ -40,9 +53,19 @@ export const createEvent = asyncHandler(async (req: AuthRequest, res: Response) 
             start: new Date(start),
             end: new Date(end),
             allDay: allDay || false,
-            type: type || "Meeting",
+            type: type || "Online Meeting",
             color,
-            userId: Number(userId)
+            userId: Number(userId),
+            clientId: clientId ? Number(clientId) : null,
+            managers: managers || null,
+            participants: participantIds && Array.isArray(participantIds) ? {
+                connect: participantIds.map((id: any) => ({ id: Number(id) }))
+            } : undefined
+        },
+        include: {
+            user: { select: { id: true, fullname: true } },
+            client: { select: { id: true, name: true } },
+            participants: { select: { id: true, fullname: true } }
         }
     });
 
@@ -55,7 +78,7 @@ export const createEvent = asyncHandler(async (req: AuthRequest, res: Response) 
 export const updateEvent = asyncHandler(async (req: AuthRequest, res: Response) => {
 
     const { id } = req.params;
-    const { title, description, start, end, allDay, type, color } = req.body;
+    const { title, description, start, end, allDay, type, color, clientId, participantIds, managers } = req.body;
 
     const existingEvent = await prisma.event.findUnique({
         where: { id: Number(id) }
@@ -73,7 +96,17 @@ export const updateEvent = asyncHandler(async (req: AuthRequest, res: Response) 
             end: end ? new Date(end) : existingEvent.end,
             allDay: allDay !== undefined ? allDay : existingEvent.allDay,
             type: type || existingEvent.type,
-            color: color || existingEvent.color
+            color: color || existingEvent.color,
+            clientId: clientId !== undefined ? (clientId ? Number(clientId) : null) : existingEvent.clientId,
+            managers: managers !== undefined ? managers : existingEvent.managers,
+            participants: participantIds && Array.isArray(participantIds) ? {
+                set: participantIds.map((id: any) => ({ id: Number(id) }))
+            } : undefined
+        },
+        include: {
+            user: { select: { id: true, fullname: true } },
+            client: { select: { id: true, name: true } },
+            participants: { select: { id: true, fullname: true } }
         }
     });
 
