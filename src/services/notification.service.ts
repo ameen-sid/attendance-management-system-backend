@@ -51,6 +51,7 @@ export const createMeetingReminders = async (eventId: number) => {
                             sound: 'default',
                             title,
                             body: message,
+                            channelId: "default",
                             data: { eventId: event.id, notificationId: notif.id }
                         }]);
                     }
